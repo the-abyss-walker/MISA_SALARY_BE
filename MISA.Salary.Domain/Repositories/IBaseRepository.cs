@@ -1,7 +1,7 @@
 ﻿using MISA.Salary.Domain.Abstract;
 
 namespace MISA.Salary.Domain.Repositories;
-public interface IRepositoryBase<TEntity, in TKey>
+public interface IBaseRepository<TEntity, in TKey>
     where TEntity : IEntity<TKey>
     where TKey : notnull
 {

@@ -25,6 +25,8 @@ public static class DependencyInjection
     public static IServiceCollection ConfigureRepositories(this IServiceCollection service)
     {
         service.AddSingleton<IEntityAttributeValues, EntityAttributeValues>();
+        service.AddScoped<ISalaryCompositionRepository, SalaryCompositionRepository>();
+        service.AddScoped<ISalaryCompositionSystemRepository, SalaryCompositionSystemRepository>();
 
         return service;
     }

@@ -10,14 +10,14 @@ namespace MISA.Salary.Infrastructure.Persistence.Repositories;
 /// </summary>
 /// <typeparam name="TEntity">Kiểu thực thể (Entity) tương ứng với bảng trong CSDL</typeparam>
 /// <typeparam name="TKey">Kiểu dữ liệu của khóa chính (Primary Key)</typeparam>
-public abstract class RepositoryBase<TEntity, TKey> : IRepositoryBase<TEntity, TKey>
+public abstract class BaseRepository<TEntity, TKey> : IBaseRepository<TEntity, TKey>
     where TEntity : class, IEntity<TKey>
     where TKey : notnull
 {
     private readonly MySqlDataSource _dataSource;
     private readonly IEntityAttributeValues _entityAttributeValues;
 
-    protected RepositoryBase(MySqlDataSource dataSource, IEntityAttributeValues entityAttributeValues)
+    protected BaseRepository(MySqlDataSource dataSource, IEntityAttributeValues entityAttributeValues)
     {
         _entityAttributeValues = entityAttributeValues;
         _dataSource = dataSource;

@@ -2,11 +2,12 @@
 using MISA.Salary.Domain.Enums;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json;
 using ValueType = MISA.Salary.Domain.Enums.ValueType;
 
 namespace MISA.Salary.Domain.Entitites;
 
-[Table("pa_salary_compostion")]
+[Table("pa_salary_composition")]
 public class SalaryComposition : IEntity<int>
 {
     [Key]
@@ -40,7 +41,7 @@ public class SalaryComposition : IEntity<int>
     [Column("salary_composition_value_type")]
     public ValueType ValueType { get; set; }
 
-    [Column("salary_composition_desctiption")]
+    [Column("salary_composition_description")]
     public string? Description { get; set; }
 
     [Column("salary_composition_status")]
@@ -53,10 +54,20 @@ public class SalaryComposition : IEntity<int>
     public bool IsNotAllowDelete { get; set; }
 
     [Column("organization_unit_ids")]
-    public List<string> OrganizationUnitIds { get; set; } = [];
+    public string? OrganizationUnitIdsJson { get; set; }
+    public List<string> OrganizationUnitIds
+    {
+        get => JsonSerializer.Deserialize<List<string>>(OrganizationUnitIdsJson ?? "[]")!;
+        set => OrganizationUnitIdsJson = JsonSerializer.Serialize(value);
+    }
 
     [Column("organization_unit_names")]
-    public List<string> OrganizationUnitNames { get; set; } = [];
+    public string ? OrganizationUnitNamesJson { get; set; }
+    public List<string> OrganizationUnitNames
+    {
+        get => JsonSerializer.Deserialize<List<string>>(OrganizationUnitNamesJson ?? "[]")!;
+        set => OrganizationUnitNamesJson = JsonSerializer.Serialize(value);
+    }
 
     [Column("salary_composition_is_default")]
     public bool IsDefault { get; set; }
