@@ -20,10 +20,10 @@ public class SalaryCompositionSystem : IEntity<int>
     public string SalaryCompositionCode { get; set; } = string.Empty;
 
     [Column("salary_composition_system_type")]
-    public CompositionType? CompositionType { get; set; }
+    public CompositionType CompositionType { get; set; }
 
     [Column("salary_composition_system_nature")]
-    public CompositionNature? CompositionNature { get; set; }
+    public CompositionNature CompositionNature { get; set; }
 
     [Column("salary_composition_system_taxable")]
     public bool? Taxable { get; set; }
@@ -48,10 +48,4 @@ public class SalaryCompositionSystem : IEntity<int>
 
     [Column("salary_composition_system_option_show_paycheck")]
     public OptionShowPaycheck? OptionShowPaycheck { get; set; }
-
-    [Column("salary_composition_system_is_not_allow_delete")]
-    public bool IsNotAllowDelete { get; set; }
-
-    [Column("salary_composition_system_is_default")]
-    public bool IsDefault { get; set; }
 }

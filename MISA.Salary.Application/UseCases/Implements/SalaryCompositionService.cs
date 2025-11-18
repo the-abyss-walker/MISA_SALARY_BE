@@ -8,13 +8,20 @@ namespace MISA.Salary.Application.UseCases.Implements;
 public class SalaryCompositionService(ISalaryCompositionRepository salaryCompositionRepository) 
     : ISalaryCompostionService
 {
-    public async Task<Result<PaginationResult<SalaryCompositionResponse>>> GetAllSalaryComposition()
+    public async Task<Result<PaginationResult<SalaryCompositionResponse>>> GetAllSalaryComposition(int pageSize, int pageIndex)
     {
-        var salaryCompositions = await salaryCompositionRepository.GetAllAsync();
+        var (entities, totalCount) = await salaryCompositionRepository.GetPagedAsync(pageSize, pageIndex);
 
-        var res = salaryCompositions.Select(SalaryCompositionMapping.ToSalaryCompositionResponse);
+        var items = entities
+            .Select(SalaryCompositionMapping.ToSalaryCompositionResponse)
+            .ToList();
 
-        return PaginationResult<SalaryCompositionResponse>.Create(5, 1, 50, [.. res]);
+        var pagination = PaginationResult<SalaryCompositionResponse>.Create(pageSize <= 0 ? 10 : pageSize,
+                                                                           pageIndex <= 0 ? 1 : pageIndex,
+                                                                           totalCount,
+                                                                           items);
+
+        return Result<PaginationResult<SalaryCompositionResponse>>.Success(pagination);
     }
 
     public async Task<Result<SalaryCompositionResponse>> CreateSalaryComposition(SalaryCompositionCreateRequest request)

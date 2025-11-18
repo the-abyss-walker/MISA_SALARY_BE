@@ -163,4 +163,36 @@ public abstract class BaseRepository<TEntity, TKey> : IBaseRepository<TEntity, T
         return count > 0;
     }
 
+    public async Task<(IEnumerable<TEntity> Items, int TotalCount)> GetPagedAsync(int pageSize, int pageIndex)
+    {
+        // sanitize inputs
+        var safePageSize = pageSize <= 0 ? 10 : pageSize;
+        var safePageIndex = pageIndex <= 0 ? 1 : pageIndex;
+        var offset = (safePageIndex - 1) * safePageSize;
+
+        await using var connection = await _dataSource.OpenConnectionAsync();
+        var tableName = _entityAttributeValues.GetTableName<TEntity>();
+
+        var columnMappings = _entityAttributeValues
+            .GetColumnMappings<TEntity>(addKey: true);
+
+        var aliasedColumns = _entityAttributeValues
+            .GetFormattedStringFromColumnMappings<TEntity>(columnMappings, "{0} AS {1}");
+
+        var commandText = $"""
+                           SELECT COUNT(1) FROM {tableName};
+                           SELECT {aliasedColumns} FROM {tableName}
+                           LIMIT @Offset, @PageSize;
+                           """;
+
+        var parameters = new DynamicParameters();
+        parameters.Add("@Offset", offset);
+        parameters.Add("@PageSize", safePageSize);
+
+        using var multi = await connection.QueryMultipleAsync(commandText, parameters);
+        var total = await multi.ReadFirstAsync<int>();
+        var items = await multi.ReadAsync<TEntity>();
+        return (items, total);
+    }
+
 }

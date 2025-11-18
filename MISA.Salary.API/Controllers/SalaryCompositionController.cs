@@ -9,9 +9,9 @@ namespace MISA.Salary.API.Controllers;
 public class SalaryCompositionController(ISalaryCompostionService salaryCompostionService) : ApiBaseController
 {
     [HttpGet("all")]
-    public async Task<IActionResult> GetAllSalaryCompositions()
+    public async Task<IActionResult> GetAllSalaryCompositions(int pageSize, int pageIndex)
     {
-        var res = await salaryCompostionService.GetAllSalaryComposition();
+        var res = await salaryCompostionService.GetAllSalaryComposition(pageSize, pageIndex);
         return ProcessResult(res);
     }
 
