@@ -48,4 +48,7 @@ public class SalaryCompositionSystem : IEntity<int>
 
     [Column("salary_composition_system_option_show_paycheck")]
     public OptionShowPaycheck? OptionShowPaycheck { get; set; }
+
+    [Column("salary_composition_system_is_used")]
+    public bool IsUsed { get; set; }
 }

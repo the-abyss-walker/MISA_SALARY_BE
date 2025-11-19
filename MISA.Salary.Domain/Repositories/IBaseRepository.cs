@@ -10,6 +10,7 @@ public interface IBaseRepository<TEntity, in TKey>
     Task<bool> AddAsync(TEntity entity);
     Task<bool> UpdateAsync(TEntity entity);
     Task DeleteAsync(TKey id);
+    Task<int> BulkDeleteAsync(IEnumerable<TKey> ids);
     Task<bool> ExistsAsync(TKey id);
     Task<(IEnumerable<TEntity> Items, int TotalCount)> GetPagedAsync(int pageSize, int pageIndex);
 }

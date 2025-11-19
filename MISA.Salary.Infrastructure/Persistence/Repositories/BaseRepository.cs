@@ -195,4 +195,25 @@ public abstract class BaseRepository<TEntity, TKey> : IBaseRepository<TEntity, T
         return (items, total);
     }
 
+    public async Task<int> BulkDeleteAsync(IEnumerable<TKey> ids)
+    {
+        if (ids == null) return 0;
+        var idList = ids.ToList();
+        if (idList.Count == 0) return 0;
+
+        await using var connection = await _dataSource.OpenConnectionAsync();
+        var tableName = _entityAttributeValues.GetTableName<TEntity>();
+        var (keyColumnName, _) = _entityAttributeValues
+            .GetKeyColumnNameAndPropertyName<TEntity>();
+
+        var commandText = $"""
+                          DELETE FROM {tableName}
+                          WHERE {keyColumnName} IN @Ids;
+                          """;
+
+        var parameters = new DynamicParameters();
+        parameters.Add("@Ids", idList);
+
+        return await connection.ExecuteAsync(commandText, parameters);
+    }
 }

@@ -5,6 +5,7 @@ using ValueType = MISA.Salary.Domain.Enums.ValueType;
 namespace MISA.Salary.Application.Commons.Models.SalaryComposition;
 public class SalaryCompositionUpdateRequest
 {
+    public int Id { get; set; }
     public string SalaryCompositionName { get; set; } = string.Empty;
     public string SalaryCompositionCode { get; set; } = string.Empty;
     public CompositionType? CompositionType { get; set; }
@@ -31,14 +32,20 @@ public class SalaryCompositionUpdateRequestValidator : AbstractValidator<SalaryC
 {
     public SalaryCompositionUpdateRequestValidator()
     {
+        RuleFor(x => x.Id)
+            .NotEmpty().WithMessage("Id thành phần lương không được để trống.");
+            
         RuleFor(x => x.SalaryCompositionName)
             .NotEmpty().WithMessage("Tên thành phần lương không được để trống.")
             .MaximumLength(255).WithMessage("Tên thành phần lương không được vượt quá 255 ký tự.");
+
         RuleFor(x => x.SalaryCompositionCode)
             .NotEmpty().WithMessage("Mã thành phần lương không được để trống.")
-            .MaximumLength(50).WithMessage("Mã thành phần lương không được vượt quá 50 ký tự.");
+            .MaximumLength(255).WithMessage("Mã thành phần lương không được vượt quá 255 ký tự.");
+
         RuleFor(x => x.ValueType)
             .IsInEnum().WithMessage("Kiểu giá trị không hợp lệ.");
+
         RuleFor(x => x.Status)
             .IsInEnum().WithMessage("Trạng thái không hợp lệ.");
     }
