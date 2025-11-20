@@ -14,8 +14,8 @@ public abstract class BaseRepository<TEntity, TKey> : IBaseRepository<TEntity, T
     where TEntity : class, IEntity<TKey>
     where TKey : notnull
 {
-    private readonly MySqlDataSource _dataSource;
-    private readonly IEntityAttributeValues _entityAttributeValues;
+    protected readonly MySqlDataSource _dataSource;
+    protected readonly IEntityAttributeValues _entityAttributeValues;
 
     protected BaseRepository(MySqlDataSource dataSource, IEntityAttributeValues entityAttributeValues)
     {

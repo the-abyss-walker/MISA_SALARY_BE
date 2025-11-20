@@ -85,4 +85,24 @@ public static class SalaryCompositionMapping
             FormulaCompositionType = request.FormulaCompositionType
         };
     }
+
+    public static SalaryComposition ToSalaryCompositionEntity(this SalaryCompositionCreateFromSystemRequest request)
+    {
+        return new SalaryComposition
+        {
+            SalaryCompositionName = request.SalaryCompositionName,
+            SalaryCompositionCode = request.SalaryCompositionCode,
+            CompositionType = request.CompositionType,
+            CompositionNature = request.CompositionNature,
+            Taxable = request.Taxable,
+            TaxDeduction = request.TaxDeduction,
+            Quota = request.QuotaFormula,
+            Formula = request.Formula,
+            ValueType = request.ValueType,
+            Description = request.Description,
+            Status = request.Status,
+            OptionShowPaycheck = request.OptionShowPaycheck,
+            IsNotAllowDelete = true 
+        };
+    }
 }

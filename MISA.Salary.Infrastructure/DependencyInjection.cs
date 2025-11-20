@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Dapper;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MISA.Salary.Domain.Repositories;
 using MISA.Salary.Infrastructure.Persistence.Repositories;
@@ -11,7 +12,8 @@ public static class DependencyInjection
     {
         return services
             .ConfigureDatabase(config)
-            .ConfigureRepositories();
+            .ConfigureRepositories()
+            .ConfigeTypeHandler();
     }
 
     public static IServiceCollection ConfigureDatabase(this IServiceCollection services, IConfiguration config)
@@ -29,5 +31,11 @@ public static class DependencyInjection
         service.AddScoped<ISalaryCompositionSystemRepository, SalaryCompositionSystemRepository>();
 
         return service;
+    }
+
+    public static IServiceCollection ConfigeTypeHandler(this IServiceCollection services)
+    {
+        SqlMapper.AddTypeHandler(new JsonListStringHandler());
+        return services;
     }
 }

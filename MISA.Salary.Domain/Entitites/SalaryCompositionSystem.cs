@@ -14,10 +14,10 @@ public class SalaryCompositionSystem : IEntity<int>
     public int Id { get; set; }
 
     [Column("salary_composition_system_name")]
-    public string SalaryCompositionName { get; set; } = string.Empty;
+    public string SalaryCompositionSystemName { get; set; } = string.Empty;
 
     [Column("salary_composition_system_code")]
-    public string SalaryCompositionCode { get; set; } = string.Empty;
+    public string SalaryCompositionSystemCode { get; set; } = string.Empty;
 
     [Column("salary_composition_system_type")]
     public CompositionType CompositionType { get; set; }

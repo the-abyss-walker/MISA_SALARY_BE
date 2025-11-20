@@ -2,26 +2,25 @@
 using MISA.Salary.Application.Commons.Models.SalaryComposition;
 using MISA.Salary.Application.UseCases.Interfaces;
 using MISA.Salary.Contract.Shared;
+using MISA.Salary.Domain.Entitites;
+using MISA.Salary.Domain.Enums;
+using MISA.Salary.Domain.Repositories;
+using MISA.Salary.Infrastructure.Common;
 using MISA.Salary.Infrastructure.Persistence.Repositories;
+using System.Net.WebSockets;
 
 namespace MISA.Salary.Application.UseCases.Implements;
-public class SalaryCompositionService(ISalaryCompositionRepository salaryCompositionRepository) 
+public class SalaryCompositionService(
+    ISalaryCompositionRepository salaryCompositionRepository, 
+    ISalaryCompositionSystemRepository salaryCompositionSystemRepository) 
     : ISalaryCompostionService
 {
-    public async Task<Result<PaginationResult<SalaryCompositionResponse>>> GetAllSalaryComposition(int pageSize, int pageIndex)
+    public async Task<Result<PaginationResult<SalaryComposition>>> FilterSalaryCompositionPaginationAsync(
+        SalaryCompositionParameter parameter)
     {
-        var (entities, totalCount) = await salaryCompositionRepository.GetPagedAsync(pageSize, pageIndex);
+        var res = await salaryCompositionRepository.FilterPaginationAsync(parameter);
 
-        var items = entities
-            .Select(SalaryCompositionMapping.ToSalaryCompositionResponse)
-            .ToList();
-
-        var pagination = PaginationResult<SalaryCompositionResponse>.Create(pageSize <= 0 ? 10 : pageSize,
-                                                                           pageIndex <= 0 ? 1 : pageIndex,
-                                                                           totalCount,
-                                                                           items);
-
-        return Result<PaginationResult<SalaryCompositionResponse>>.Success(pagination);
+        return Result<PaginationResult<SalaryComposition>>.Success(res);
     }
 
     public async Task<Result<SalaryCompositionResponse>> GetSalaryCompositionById(int salaryCompositionId)
@@ -103,5 +102,53 @@ public class SalaryCompositionService(ISalaryCompositionRepository salaryComposi
         {
             return Result.Failure(400, new Error("PartialDeletion", "Some salary compositions could not be deleted."));
         }
+    }
+
+    public async Task<Result> UpdateSalaryCompositionStatus(int salaryCompositionId, Status status)
+    {
+        var existingEntity = await salaryCompositionRepository.GetByIdAsync(salaryCompositionId);
+        if (existingEntity == null)
+        {
+            return Result.Failure(404, new Error("NotFound", "Salary composition not found."));
+        }
+
+        var updated = await salaryCompositionRepository.UpdateSalaryCompositionStatus(salaryCompositionId, status);
+        if (!updated)
+        {
+            return Result.Failure(400, new Error("UpdateFailed", "Failed to update status."));
+        }
+
+        return Result.Success(200);
+    }
+
+    public async Task<Result<string>> CreateSalaryCompositionFromSystemAsync(int salaryCompositionSystemId)
+    {
+        var salaryCompositionSystem = await salaryCompositionSystemRepository.GetByIdAsync(salaryCompositionSystemId);
+        if (salaryCompositionSystem == null)
+        {
+            return Result<string>.Failure(404, new Error("NotFound", "Salary composition system not found."));
+        }
+
+        var salaryComposition = new SalaryComposition
+        {
+            SalaryCompositionName = salaryCompositionSystem.SalaryCompositionSystemName,
+            SalaryCompositionCode = salaryCompositionSystem.SalaryCompositionSystemCode,
+            CompositionType = salaryCompositionSystem.CompositionType,
+            CompositionNature = salaryCompositionSystem.CompositionNature,
+            Taxable = salaryCompositionSystem.Taxable,
+            TaxDeduction = salaryCompositionSystem.TaxDeduction,
+            Quota = salaryCompositionSystem.QuotaFormula,
+            Formula = salaryCompositionSystem.Formula,
+            ValueType = salaryCompositionSystem.ValueType,
+            Description = salaryCompositionSystem.Description,
+            Status = Status.Following,
+            OptionShowPaycheck = salaryCompositionSystem.OptionShowPaycheck,
+            IsNotAllowDelete = true,
+        };
+
+        await salaryCompositionRepository.AddAsync(salaryComposition);
+        await salaryCompositionSystemRepository.RemoveFromSystemCompositionsAsync(salaryCompositionSystemId);
+
+        return Result<string>.Success("Salary composition created from system successfully.", 201);
     }
 }

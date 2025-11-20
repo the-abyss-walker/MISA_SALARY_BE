@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\MISA.Salary.Contract\MISA.Salary.Contract.csproj" />
+  </ItemGroup>
+
 </Project>

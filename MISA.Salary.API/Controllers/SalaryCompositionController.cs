@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using MISA.Salary.Application.Commons.Models.SalaryComposition;
 using MISA.Salary.Application.UseCases.Interfaces;
+using MISA.Salary.Infrastructure.Common;
 
 namespace MISA.Salary.API.Controllers;
 
@@ -8,10 +9,10 @@ namespace MISA.Salary.API.Controllers;
 [ApiController]
 public class SalaryCompositionController(ISalaryCompostionService salaryCompostionService) : ApiBaseController
 {
-    [HttpGet("all")]
-    public async Task<IActionResult> GetAllSalaryCompositions(int pageSize, int pageIndex)
+    [HttpGet("page")]
+    public async Task<IActionResult> FilterCompositionPagination([FromQuery] SalaryCompositionParameter parameter)
     {
-        var res = await salaryCompostionService.GetAllSalaryComposition(pageSize, pageIndex);
+        var res = await salaryCompostionService.FilterSalaryCompositionPaginationAsync(parameter);
         return ProcessResult(res);
     }
 
@@ -47,6 +48,13 @@ public class SalaryCompositionController(ISalaryCompostionService salaryComposti
     public async Task<IActionResult> BulkDeleteSalaryCompositions([FromBody] IEnumerable<int> ids)
     {
         var res = await salaryCompostionService.BulkDeleteSalaryCompositions(ids);
+        return ProcessResult(res);
+    }
+
+    [HttpPatch("{id}/status")]
+    public async Task<IActionResult> UpdateSalaryCompositionStatus([FromRoute] int id, [FromBody] StatusUpdateRequest request)
+    {
+        var res = await salaryCompostionService.UpdateSalaryCompositionStatus(id, request.Status);
         return ProcessResult(res);
     }
 }
