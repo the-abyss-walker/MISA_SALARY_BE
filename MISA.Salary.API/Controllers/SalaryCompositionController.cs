@@ -1,7 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using MISA.Salary.Application.Commons.Models.SalaryComposition;
 using MISA.Salary.Application.UseCases.Interfaces;
-using MISA.Salary.Infrastructure.Common;
+using MISA.Salary.Contract.Query;
+using MISA.Salary.Domain.Enums;
 
 namespace MISA.Salary.API.Controllers;
 
@@ -9,6 +10,13 @@ namespace MISA.Salary.API.Controllers;
 [ApiController]
 public class SalaryCompositionController(ISalaryCompostionService salaryCompostionService) : ApiBaseController
 {
+    [HttpGet("all")]
+    public async Task<IActionResult> GetAllSalaryCompositions()
+    {
+        var res = await salaryCompostionService.GetAllSalaryCompositionsAsync();
+        return ProcessResult(res);
+    }
+
     [HttpGet("page")]
     public async Task<IActionResult> FilterCompositionPagination([FromQuery] SalaryCompositionParameter parameter)
     {
@@ -37,6 +45,13 @@ public class SalaryCompositionController(ISalaryCompostionService salaryComposti
         return ProcessResult(res);
     }
 
+    [HttpDelete]
+    public async Task<IActionResult> BulkDeleteSalaryCompositions([FromBody] IEnumerable<int> ids)
+    {
+        var res = await salaryCompostionService.BulkDeleteSalaryCompositions(ids);
+        return ProcessResult(res);
+    }
+
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteSalaryComposition([FromRoute] int id)
     {
@@ -44,17 +59,31 @@ public class SalaryCompositionController(ISalaryCompostionService salaryComposti
         return ProcessResult(res);
     }
 
-    [HttpDelete("bulk-delete")]
-    public async Task<IActionResult> BulkDeleteSalaryCompositions([FromBody] IEnumerable<int> ids)
+    [HttpPost("default-composition")]
+    public async Task<IActionResult> CheckDefaultSalryComposition([FromBody] IEnumerable<int> ids)
     {
-        var res = await salaryCompostionService.BulkDeleteSalaryCompositions(ids);
+        var res = await salaryCompostionService.CheckDefaultComposition(ids);
         return ProcessResult(res);
     }
 
-    [HttpPatch("{id}/status")]
+    [HttpPatch("status/{id}")]
     public async Task<IActionResult> UpdateSalaryCompositionStatus([FromRoute] int id, [FromBody] StatusUpdateRequest request)
     {
         var res = await salaryCompostionService.UpdateSalaryCompositionStatus(id, request.Status);
+        return ProcessResult(res);
+    }
+
+    [HttpPatch("list-status")]
+    public async Task<IActionResult> UpdateSalaryCompositionListStatus([FromBody] IEnumerable<int> ids, [FromQuery] Status status)
+    {
+        var res = await salaryCompostionService.UpdateListSalaryCompositionStatus(ids, status);
+        return ProcessResult(res);
+    }
+
+    [HttpPost("from-system")]
+    public async Task<IActionResult> CreateSalaryCompositionFromSystem([FromBody] IEnumerable<int> ids)
+    {
+        var res = await salaryCompostionService.CreateSalaryCompositionFromSystemAsync(ids);
         return ProcessResult(res);
     }
 }

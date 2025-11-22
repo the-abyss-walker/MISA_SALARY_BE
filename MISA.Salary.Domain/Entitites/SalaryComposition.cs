@@ -8,7 +8,7 @@ using ValueType = MISA.Salary.Domain.Enums.ValueType;
 namespace MISA.Salary.Domain.Entitites;
 
 [Table("pa_salary_composition")]
-public class SalaryComposition : IEntity<int>
+public class SalaryComposition : AuditableEntity, IEntity<int>
 {
     [Key]
     [Column("salary_composition_id")]
@@ -80,6 +80,9 @@ public class SalaryComposition : IEntity<int>
 
     [Column("salary_composition_auto_sum_employee_type")]
     public AutoSumEmployeeType? AutoSumEmployeeType { get; set; }
+
+    [Column("salary_composition_auto_sum_org_level")]
+    public AutoSumOrgLevel? AutoSumOrgLevel { get; set; }
 
     [Column("salary_composition_formula_composition_type")]
     public FormulaCompositionType? FormulaCompositionType { get; set; }

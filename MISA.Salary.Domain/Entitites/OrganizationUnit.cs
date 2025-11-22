@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace MISA.Salary.Domain.Entitites;
 
 [Table("pa_organization_unit")]
-public class OrganizationUnit : IEntity<int>, ISoftDelete
+public class OrganizationUnit : IEntity<int>
 {
     [Key]
     [Column("organization_unit_id")]
@@ -15,8 +15,5 @@ public class OrganizationUnit : IEntity<int>, ISoftDelete
     public string OrganizationName { get; set; } = string.Empty;
 
     [Column("parent_id")]
-    public string ParentId { get; set; } = string.Empty;
-
-    [Column("is_deleted")]
-    public bool IsDeleted { get; set; }
+    public int ParentId { get; set; } 
 }

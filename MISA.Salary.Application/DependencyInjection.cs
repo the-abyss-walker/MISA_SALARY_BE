@@ -27,6 +27,8 @@ public static class DependencyInjection
     public static IServiceCollection ConfigureServices(this IServiceCollection services)
     {
         services.AddScoped<ISalaryCompostionService, SalaryCompositionService>();
+        services.AddScoped<ISalaryCompositionSystemService, SalaryCompositionSystemService>();
+        services.AddScoped<IOrganizationUnitService, OrganizationUnitService>();
         return services;
     }
 }

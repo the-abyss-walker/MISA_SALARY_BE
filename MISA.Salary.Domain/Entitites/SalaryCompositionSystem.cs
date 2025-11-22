@@ -7,7 +7,7 @@ using ValueType = MISA.Salary.Domain.Enums.ValueType;
 namespace MISA.Salary.Domain.Entitites;
 
 [Table("pa_salary_composition_system")]
-public class SalaryCompositionSystem : IEntity<int>
+public class SalaryCompositionSystem : AuditableEntity, IEntity<int>
 {
     [Key]
     [Column("salary_composition_system_id")]
@@ -42,9 +42,6 @@ public class SalaryCompositionSystem : IEntity<int>
 
     [Column("salary_composition_system_description")]
     public string? Description { get; set; }
-
-    [Column("salary_composition_system_status")]
-    public Status Status { get; set; }
 
     [Column("salary_composition_system_option_show_paycheck")]
     public OptionShowPaycheck? OptionShowPaycheck { get; set; }

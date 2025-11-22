@@ -1,20 +1,28 @@
-﻿using MISA.Salary.Application.Commons.Mapping;
+﻿using MISA.Salary.Application.Commons.Errors;
+using MISA.Salary.Application.Commons.Mapping;
 using MISA.Salary.Application.Commons.Models.SalaryComposition;
 using MISA.Salary.Application.UseCases.Interfaces;
+using MISA.Salary.Contract.Query;
 using MISA.Salary.Contract.Shared;
 using MISA.Salary.Domain.Entitites;
 using MISA.Salary.Domain.Enums;
 using MISA.Salary.Domain.Repositories;
-using MISA.Salary.Infrastructure.Common;
 using MISA.Salary.Infrastructure.Persistence.Repositories;
-using System.Net.WebSockets;
 
 namespace MISA.Salary.Application.UseCases.Implements;
 public class SalaryCompositionService(
     ISalaryCompositionRepository salaryCompositionRepository, 
-    ISalaryCompositionSystemRepository salaryCompositionSystemRepository) 
+    ISalaryCompositionSystemRepository salaryCompositionSystemRepository,
+    IOrganizationUnitRepository organizationUnitRepository) 
     : ISalaryCompostionService
 {
+    public async Task<Result<IEnumerable<SalaryCompositionResponse>>> GetAllSalaryCompositionsAsync()
+    {
+        var entities = await salaryCompositionRepository.GetAllAsync();
+        var res = entities.Select(SalaryCompositionMapping.ToSalaryCompositionResponse);
+        return Result<IEnumerable<SalaryCompositionResponse>>.Success(res);
+    }
+    
     public async Task<Result<PaginationResult<SalaryComposition>>> FilterSalaryCompositionPaginationAsync(
         SalaryCompositionParameter parameter)
     {
@@ -28,7 +36,7 @@ public class SalaryCompositionService(
         var entity = await salaryCompositionRepository.GetByIdAsync(salaryCompositionId);
         if (entity == null)
         {
-            return Result<SalaryCompositionResponse>.Failure();
+            return Result<SalaryCompositionResponse>.Failure(404, SalaryCompositionErrors.SalaryCompositionNotFound);
         }
         var res = SalaryCompositionMapping.ToSalaryCompositionResponse(entity);
         return Result<SalaryCompositionResponse>.Success(res);
@@ -36,9 +44,27 @@ public class SalaryCompositionService(
 
     public async Task<Result<SalaryCompositionResponse>> CreateSalaryComposition(SalaryCompositionCreateRequest request)
     {
-        // Map request to entity
+        if (await salaryCompositionRepository.ExistsByCodeAsync(request.SalaryCompositionCode))
+        {
+            return Result<SalaryCompositionResponse>.Failure(400, SalaryCompositionErrors.SalaryCompositionCodeExists);
+        }
+
+        var organizationUnitNames = new List<string>();
+
+        if (request.OrganizationUnitIds != null && request.OrganizationUnitIds.Count != 0)
+        {
+            foreach (var orgUnitId in request.OrganizationUnitIds)
+            {
+                var orgUnit = await organizationUnitRepository.GetByIdAsync(int.Parse(orgUnitId));
+                if (orgUnit == null)
+                {
+                    return Result<SalaryCompositionResponse>.Failure(404, OrganizationUnitErrors.OrganizationUnitNotFound);
+                }
+                organizationUnitNames.Add(orgUnit != null ? orgUnit.OrganizationName : string.Empty);
+            }
+        }
         var salaryComposition = SalaryCompositionMapping.ToSalaryCompositionEntity(request);
-        // Save to database
+        salaryComposition.OrganizationUnitNames = organizationUnitNames;
         await salaryCompositionRepository.AddAsync(salaryComposition);
 
         var res = SalaryCompositionMapping.ToSalaryCompositionResponse(salaryComposition);
@@ -50,7 +76,7 @@ public class SalaryCompositionService(
         var existingEntity = await salaryCompositionRepository.GetByIdAsync(request.Id);
         if (existingEntity == null)
         {
-            return Result<SalaryCompositionResponse>.Failure();
+            return Result<SalaryCompositionResponse>.Failure(404, SalaryCompositionErrors.SalaryCompositionNotFound);
         }
 
         // Map request to entity
@@ -66,42 +92,57 @@ public class SalaryCompositionService(
         var existingEntity = await salaryCompositionRepository.GetByIdAsync(salaryCompositionId);
         if (existingEntity == null)
         {
-            return Result.Failure();
+            return Result.Failure(404, SalaryCompositionErrors.SalaryCompositionNotFound);
         }
 
         if (existingEntity.IsDefault)
         {
-            return Result.Failure(400, new Error("CannotDeleteDefault", "Cannot delete default salary composition."));
+            return Result.Failure(400, SalaryCompositionErrors.SalaryCompositionDefault);
         }
         await salaryCompositionRepository.DeleteAsync(salaryCompositionId);
-        return Result.Success(204);
+        return Result.Success();
+    }
+
+    public async Task<Result<DefaultCompositionCheckResponse>> CheckDefaultComposition(IEnumerable<int> salaryCompositionIds)
+    {
+        var salaryCompositions = await salaryCompositionRepository.GetByIdsAsync(salaryCompositionIds);
+        var salaryCompositionsResponese = salaryCompositions
+            .Select(SalaryCompositionMapping.ToSalaryCompositionResponse)
+            .ToList();
+
+        var defaultEntities = new List<SalaryCompositionResponse>();
+        var normalEntities = new List<SalaryCompositionResponse>();
+
+        foreach (var entity in salaryCompositionsResponese)
+        {
+            if (entity is null)
+                continue;
+
+            if (!entity.IsDefault)
+            {
+                normalEntities.Add(entity);
+            }
+            else defaultEntities.Add(entity!);
+        }
+
+        var res = new DefaultCompositionCheckResponse
+        {
+            DefaultComposition = defaultEntities,
+            NormalComposition = normalEntities
+        };
+        return res;
     }
 
     public async Task<Result> BulkDeleteSalaryCompositions(IEnumerable<int> salaryCompositionIds)
     {
-        var idsList = salaryCompositionIds.ToList();
-        var defaultEntities = new List<int>();
-        foreach (var id in idsList)
+        var deleteCount = await salaryCompositionRepository.BulkDeleteAsync(salaryCompositionIds);
+
+        if (deleteCount == 0)
         {
-            var entity = await salaryCompositionRepository.GetByIdAsync(id);
-            if (entity != null && entity.IsDefault)
-            {
-                defaultEntities.Add(id);
-            }
+            return Result.Failure(400, SalaryCompositionErrors.DeleteSalaryCompositionFailed);
         }
-        if (defaultEntities.Count != 0)
-        {
-            return Result.Failure(400, new Error("CannotDeleteDefault", "Cannot delete default salary compositions."));
-        }
-        var deletedCount = await salaryCompositionRepository.BulkDeleteAsync(idsList);
-        if (deletedCount == idsList.Count)
-        {
-            return Result.Success(204);
-        }
-        else
-        {
-            return Result.Failure(400, new Error("PartialDeletion", "Some salary compositions could not be deleted."));
-        }
+
+        return Result.Success();
     }
 
     public async Task<Result> UpdateSalaryCompositionStatus(int salaryCompositionId, Status status)
@@ -109,45 +150,39 @@ public class SalaryCompositionService(
         var existingEntity = await salaryCompositionRepository.GetByIdAsync(salaryCompositionId);
         if (existingEntity == null)
         {
-            return Result.Failure(404, new Error("NotFound", "Salary composition not found."));
+            return Result.Failure(404, SalaryCompositionErrors.SalaryCompositionNotFound);
         }
 
         var updated = await salaryCompositionRepository.UpdateSalaryCompositionStatus(salaryCompositionId, status);
         if (!updated)
         {
-            return Result.Failure(400, new Error("UpdateFailed", "Failed to update status."));
+            return Result.Failure(400, SalaryCompositionErrors.SalaryCompositionUpdateStatusFailed);
         }
 
-        return Result.Success(200);
+        return Result.Success();
     }
 
-    public async Task<Result<string>> CreateSalaryCompositionFromSystemAsync(int salaryCompositionSystemId)
+    public async Task<Result> UpdateListSalaryCompositionStatus(IEnumerable<int> salaryCompositionIds, Status status)
     {
-        var salaryCompositionSystem = await salaryCompositionSystemRepository.GetByIdAsync(salaryCompositionSystemId);
-        if (salaryCompositionSystem == null)
+        var update = await salaryCompositionRepository.UpdateSalaryCompositionListStatus(salaryCompositionIds, status);
+
+        if (!update)
         {
-            return Result<string>.Failure(404, new Error("NotFound", "Salary composition system not found."));
+            return Result.Failure(400, SalaryCompositionErrors.SalaryCompositionUpdateStatusFailed);
         }
 
-        var salaryComposition = new SalaryComposition
-        {
-            SalaryCompositionName = salaryCompositionSystem.SalaryCompositionSystemName,
-            SalaryCompositionCode = salaryCompositionSystem.SalaryCompositionSystemCode,
-            CompositionType = salaryCompositionSystem.CompositionType,
-            CompositionNature = salaryCompositionSystem.CompositionNature,
-            Taxable = salaryCompositionSystem.Taxable,
-            TaxDeduction = salaryCompositionSystem.TaxDeduction,
-            Quota = salaryCompositionSystem.QuotaFormula,
-            Formula = salaryCompositionSystem.Formula,
-            ValueType = salaryCompositionSystem.ValueType,
-            Description = salaryCompositionSystem.Description,
-            Status = Status.Following,
-            OptionShowPaycheck = salaryCompositionSystem.OptionShowPaycheck,
-            IsNotAllowDelete = true,
-        };
+        return Result.Success();
+    }
 
-        await salaryCompositionRepository.AddAsync(salaryComposition);
-        await salaryCompositionSystemRepository.RemoveFromSystemCompositionsAsync(salaryCompositionSystemId);
+    public async Task<Result<string>> CreateSalaryCompositionFromSystemAsync(IEnumerable<int> salaryCompositionSystemIds)
+    {
+        var salaryCompositionSystems = await salaryCompositionSystemRepository.GetByIdsAsync(salaryCompositionSystemIds);
+
+        var salaryCompositions = salaryCompositionSystems.Select(SalaryCompositionMapping.ToSalaryCompositionEntity).ToList();
+        
+        await salaryCompositionSystemRepository.RemoveFromSystemCompositionsAsync(salaryCompositionSystemIds);
+
+        await salaryCompositionRepository.AddRangeAsync(salaryCompositions);
 
         return Result<string>.Success("Salary composition created from system successfully.", 201);
     }

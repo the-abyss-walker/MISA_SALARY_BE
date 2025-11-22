@@ -1,5 +1,6 @@
 ﻿using MISA.Salary.Application.Commons.Models.SalaryComposition;
 using MISA.Salary.Domain.Entitites;
+using MISA.Salary.Domain.Enums;
 
 namespace MISA.Salary.Application.Commons.Mapping;
 public static class SalaryCompositionMapping
@@ -28,6 +29,7 @@ public static class SalaryCompositionMapping
             AutoSumCompositionCode = salaryComposition.AutoSumCompositionCode,
             IsAutoSumEmployee = salaryComposition.IsAutoSumEmployee,
             AutoSumEmployeeType = salaryComposition.AutoSumEmployeeType,
+            AutoSumOrgLevel = salaryComposition.AutoSumOrgLevel,
             FormulaCompositionType = salaryComposition.FormulaCompositionType
         };
     }
@@ -50,11 +52,11 @@ public static class SalaryCompositionMapping
             OptionShowPaycheck = request.OptionShowPaycheck,
             IsNotAllowDelete = request.IsNotAllowDelete,
             OrganizationUnitIds = request.OrganizationUnitIds,
-            OrganizationUnitNames = request.OrganizationUnitNames,
             IsDefault = request.IsDefault,
             AutoSumCompositionCode = request.AutoSumCompositionCode,
             IsAutoSumEmployee = request.IsAutoSumEmployee,
             AutoSumEmployeeType = request.AutoSumEmployeeType,
+            AutoSumOrgLevel = request.AutoSumOrgLevel,
             FormulaCompositionType = request.FormulaCompositionType
         };
     }
@@ -64,7 +66,6 @@ public static class SalaryCompositionMapping
         return new SalaryComposition
         {
             SalaryCompositionName = request.SalaryCompositionName,
-            SalaryCompositionCode = request.SalaryCompositionCode,
             CompositionType = request.CompositionType,
             CompositionNature = request.CompositionNature,
             Taxable = request.Taxable,
@@ -82,6 +83,7 @@ public static class SalaryCompositionMapping
             AutoSumCompositionCode = request.AutoSumCompositionCode,
             IsAutoSumEmployee = request.IsAutoSumEmployee,
             AutoSumEmployeeType = request.AutoSumEmployeeType,
+            AutoSumOrgLevel = request.AutoSumOrgLevel,
             FormulaCompositionType = request.FormulaCompositionType
         };
     }
@@ -103,6 +105,26 @@ public static class SalaryCompositionMapping
             Status = request.Status,
             OptionShowPaycheck = request.OptionShowPaycheck,
             IsNotAllowDelete = true 
+        };
+    }
+
+    public static SalaryComposition ToSalaryCompositionEntity(this SalaryCompositionSystem request)
+    {
+        return new SalaryComposition
+        {
+            SalaryCompositionName = request.SalaryCompositionSystemName,
+            SalaryCompositionCode = request.SalaryCompositionSystemCode,
+            CompositionType = request.CompositionType,
+            CompositionNature = request.CompositionNature,
+            Taxable = request.Taxable,
+            TaxDeduction = request.TaxDeduction,
+            Quota = request.QuotaFormula,
+            Formula = request.Formula,
+            ValueType = request.ValueType,
+            Description = request.Description,
+            Status = Status.Following,
+            OptionShowPaycheck = request.OptionShowPaycheck,
+            IsDefault = true,
         };
     }
 }

@@ -11,7 +11,7 @@ public class PaginationResult<T>
     }
     public PaginationResult(int totalCount, List<T> data)
     {
-        PageSize = 10;
+        PageSize = 15;
         PageIndex = 1;
         TotalCount = totalCount;
         Items = data;

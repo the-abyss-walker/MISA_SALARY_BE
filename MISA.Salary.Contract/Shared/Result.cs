@@ -17,7 +17,7 @@ public class Result
     }
 
     public bool IsSuccess { get; set; }
-    public int StatusCode { get; set; }
+    public int StatusCode { get; set; } 
     public List<Error> Errors { get; set; }
 
     public static Result Failure(int statusCode = 400, params Error[] errors)

@@ -25,5 +25,6 @@ public class SalaryCompositionResponse
     public string? AutoSumCompositionCode { get; set; }
     public bool IsAutoSumEmployee { get; set; }
     public AutoSumEmployeeType? AutoSumEmployeeType { get; set; }
+    public AutoSumOrgLevel? AutoSumOrgLevel { get; set; }
     public FormulaCompositionType? FormulaCompositionType { get; set; }
 }

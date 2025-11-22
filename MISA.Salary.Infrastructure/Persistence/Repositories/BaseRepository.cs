@@ -74,6 +74,31 @@ public abstract class BaseRepository<TEntity, TKey> : IBaseRepository<TEntity, T
     }
 
     /// <summary>
+    /// Lấy các bản ghi theo khóa chính
+    /// </summary>
+    /// <param name="ids">Giá trị các khóa chính cần tìm</param>
+    /// <returns>Danh sác các bản ghi</returns>
+    public async Task<IEnumerable<TEntity>> GetByIdsAsync(IEnumerable<TKey> ids)
+    {
+        await using var connection = await _dataSource.OpenConnectionAsync();
+        var tableName = _entityAttributeValues.GetTableName<TEntity>();
+        var columnMappings = _entityAttributeValues
+            .GetColumnMappings<TEntity>(addKey: true);
+        var aliasedColumns = _entityAttributeValues
+            .GetFormattedStringFromColumnMappings<TEntity>(columnMappings, "{0} AS {1}");
+        var (keyColumnName, keyPropertyName) = _entityAttributeValues
+            .GetKeyColumnNameAndPropertyName<TEntity>();
+        var commandText = $"""
+                           SELECT {aliasedColumns} 
+                           FROM {tableName} 
+                           WHERE {keyColumnName} IN @{keyPropertyName};
+                           """;
+        var parameters = new DynamicParameters();
+        parameters.Add($"@{keyPropertyName}", ids);
+        return await connection.QueryAsync<TEntity>(commandText, parameters);
+    }
+
+    /// <summary>
     /// Thêm mới một bản ghi vào bảng tương ứng.
     /// </summary>
     /// <param name="entity">Thực thể cần thêm</param>
@@ -123,6 +148,31 @@ public abstract class BaseRepository<TEntity, TKey> : IBaseRepository<TEntity, T
     }
 
     /// <summary>
+    /// Cập nhật một số thuộc tính cụ thể của bản ghi dựa trên khóa chính.
+    /// </summary>
+    /// <param name="entity">Thực thể cần cập nhật</param>
+    /// <param name="propertiesToUpdate">Thuộc tính cần cập nhật</param>
+    /// <returns></returns>
+    public async Task<bool> UpdatePartialAsync(TEntity entity, IEnumerable<string> propertiesToUpdate)
+    {
+        await using var connection = await _dataSource.OpenConnectionAsync();
+        var tableName = _entityAttributeValues.GetTableName<TEntity>();
+        var columnMappings = _entityAttributeValues
+            .GetColumnMappings<TEntity>(addKey: true);
+        var (keyColumnName, keyPropertyName) = _entityAttributeValues
+            .GetKeyColumnNameAndPropertyName<TEntity>();
+        var setClauses = propertiesToUpdate
+            .Where(prop => columnMappings.ContainsValue(prop))
+            .Select(prop => $"{columnMappings.First(kv => kv.Value == prop).Key} = @{prop}");
+        var commandText = $"""
+                          UPDATE {tableName}
+                          SET {string.Join(", ", setClauses)}
+                          WHERE {keyColumnName} = @{keyPropertyName};
+                          """;
+        return await connection.ExecuteAsync(commandText, entity) > 0;
+    }
+
+    /// <summary>
     /// Xóa một bản ghi dựa trên khóa chính.
     /// </summary>
     /// <param name="id">Giá trị khóa chính của bản ghi cần xóa</param>
@@ -136,10 +186,10 @@ public abstract class BaseRepository<TEntity, TKey> : IBaseRepository<TEntity, T
 
         var commandText = $"""
                           DELETE FROM {tableName}
-                          WHERE {keyPropertyName} = @{keyColumnName};
+                          WHERE {keyColumnName} = @{keyPropertyName};
                           """;
         var parameters = new DynamicParameters();
-        parameters.Add($"@{keyColumnName}", id);
+        parameters.Add($"@{keyPropertyName}", id);
         await connection.ExecuteAsync(commandText, parameters);
     }
 

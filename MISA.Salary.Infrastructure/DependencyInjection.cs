@@ -29,6 +29,7 @@ public static class DependencyInjection
         service.AddSingleton<IEntityAttributeValues, EntityAttributeValues>();
         service.AddScoped<ISalaryCompositionRepository, SalaryCompositionRepository>();
         service.AddScoped<ISalaryCompositionSystemRepository, SalaryCompositionSystemRepository>();
+        service.AddScoped<IOrganizationUnitRepository, OrganizationUnitRepository>();
 
         return service;
     }

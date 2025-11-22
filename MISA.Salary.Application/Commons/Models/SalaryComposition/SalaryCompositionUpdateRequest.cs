@@ -7,7 +7,6 @@ public class SalaryCompositionUpdateRequest
 {
     public int Id { get; set; }
     public string SalaryCompositionName { get; set; } = string.Empty;
-    public string SalaryCompositionCode { get; set; } = string.Empty;
     public CompositionType? CompositionType { get; set; }
     public CompositionNature? CompositionNature { get; set; }
     public bool? Taxable { get; set; }
@@ -25,6 +24,7 @@ public class SalaryCompositionUpdateRequest
     public string? AutoSumCompositionCode { get; set; }
     public bool IsAutoSumEmployee { get; set; }
     public AutoSumEmployeeType? AutoSumEmployeeType { get; set; }
+    public AutoSumOrgLevel? AutoSumOrgLevel { get; set; }
     public FormulaCompositionType? FormulaCompositionType { get; set; }
 }
 
@@ -38,10 +38,6 @@ public class SalaryCompositionUpdateRequestValidator : AbstractValidator<SalaryC
         RuleFor(x => x.SalaryCompositionName)
             .NotEmpty().WithMessage("Tên thành phần lương không được để trống.")
             .MaximumLength(255).WithMessage("Tên thành phần lương không được vượt quá 255 ký tự.");
-
-        RuleFor(x => x.SalaryCompositionCode)
-            .NotEmpty().WithMessage("Mã thành phần lương không được để trống.")
-            .MaximumLength(255).WithMessage("Mã thành phần lương không được vượt quá 255 ký tự.");
 
         RuleFor(x => x.ValueType)
             .IsInEnum().WithMessage("Kiểu giá trị không hợp lệ.");
