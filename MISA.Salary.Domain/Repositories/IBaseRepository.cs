@@ -10,7 +10,7 @@ public interface IBaseRepository<TEntity, in TKey>
     Task<IEnumerable<TEntity>> GetByIdsAsync(IEnumerable<TKey> ids);
     Task<bool> AddAsync(TEntity entity);
     Task<bool> UpdateAsync(TEntity entity);
-    Task<bool> UpdatePartialAsync(TEntity entity, IEnumerable<string> propertiesToUpdate);
+    Task<bool> UpdatePartialAsync<TUpdate>(TUpdate updateRequest);
     Task DeleteAsync(TKey id);
     Task<int> BulkDeleteAsync(IEnumerable<TKey> ids);
     Task<bool> ExistsAsync(TKey id);

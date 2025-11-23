@@ -80,11 +80,14 @@ public class SalaryCompositionService(
             return Result<SalaryCompositionResponse>.Failure(404, SalaryCompositionErrors.SalaryCompositionNotFound);
         }
 
-        // Map request to entity
-        var salaryComposition = SalaryCompositionMapping.ToSalaryCompositionEntity(request);
-        // Update in database
-        await salaryCompositionRepository.UpdateAsync(salaryComposition);
-        var res = SalaryCompositionMapping.ToSalaryCompositionResponse(salaryComposition);
+        var updated = await salaryCompositionRepository.UpdatePartialAsync(request);
+        if (!updated)
+        {
+            return Result<SalaryCompositionResponse>.Failure();
+        }
+
+        var updatedEntity = await salaryCompositionRepository.GetByIdAsync(request.Id);
+        var res = SalaryCompositionMapping.ToSalaryCompositionResponse(updatedEntity!);
         return Result<SalaryCompositionResponse>.Success(res);
     }
 
@@ -211,8 +214,15 @@ public class SalaryCompositionService(
             }
         }
 
+        if (duplicated.Count == 0)
+        {
+            await CreateSalaryCompositionFromSystemAsync(request.SalaryCompositionSystemIds);
+            return Result<IEnumerable<SalaryCompositionSystemResponse>>.Success(duplicated);
+        }
+
         if (request.IsAllowanceUpdate is null || request.IsAllowanceUpdate == false)
         {
+            
             return Result<IEnumerable<SalaryCompositionSystemResponse>>.Success(duplicated);
         }
 

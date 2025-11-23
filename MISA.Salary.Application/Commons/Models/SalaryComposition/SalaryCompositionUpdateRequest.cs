@@ -20,7 +20,6 @@ public class SalaryCompositionUpdateRequest
     public bool IsNotAllowDelete { get; set; }
     public List<string> OrganizationUnitIds { get; set; } = [];
     public List<string> OrganizationUnitNames { get; set; } = [];
-    public bool IsDefault { get; set; }
     public string? AutoSumCompositionCode { get; set; }
     public bool IsAutoSumEmployee { get; set; }
     public AutoSumEmployeeType? AutoSumEmployeeType { get; set; }

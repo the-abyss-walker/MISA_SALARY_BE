@@ -53,16 +53,16 @@ public class SalaryComposition : AuditableEntity, IEntity<int>
     [Column("salary_composition_is_not_allow_delete")]
     public bool? IsNotAllowDelete { get; set; }
 
-    [Column("organization_unit_ids")]
     public string? OrganizationUnitIdsJson { get; set; }
+    [Column("organization_unit_ids")]
     public List<string> OrganizationUnitIds
     {
         get => JsonSerializer.Deserialize<List<string>>(OrganizationUnitIdsJson ?? "[]")!;
         set => OrganizationUnitIdsJson = JsonSerializer.Serialize(value);
     }
 
-    [Column("organization_unit_names")]
     public string ? OrganizationUnitNamesJson { get; set; }
+    [Column("organization_unit_names")]
     public List<string> OrganizationUnitNames
     {
         get => JsonSerializer.Deserialize<List<string>>(OrganizationUnitNamesJson ?? "[]")!;

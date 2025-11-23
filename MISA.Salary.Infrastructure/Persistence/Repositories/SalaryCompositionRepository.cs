@@ -5,6 +5,7 @@ using MISA.Salary.Domain.Entitites;
 using MISA.Salary.Domain.Enums;
 using MISA.Salary.Domain.Repositories;
 using MySqlConnector;
+using System.Data;
 
 namespace MISA.Salary.Infrastructure.Persistence.Repositories;
 public class SalaryCompositionRepository: BaseRepository<SalaryComposition, int>,
@@ -29,7 +30,7 @@ public class SalaryCompositionRepository: BaseRepository<SalaryComposition, int>
                 p_search_query = parameter.Query,
                 p_status = parameter.Status,
             },
-            commandType: System.Data.CommandType.StoredProcedure);
+            commandType: CommandType.StoredProcedure);
 
         var totalCount = await multi.ReadFirstAsync<int>();
         var items = (await multi.ReadAsync<SalaryComposition>()).ToList();

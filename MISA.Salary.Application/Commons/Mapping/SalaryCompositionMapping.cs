@@ -65,6 +65,7 @@ public static class SalaryCompositionMapping
     {
         return new SalaryComposition
         {
+            Id = request.Id,
             SalaryCompositionName = request.SalaryCompositionName,
             CompositionType = request.CompositionType,
             CompositionNature = request.CompositionNature,
@@ -79,7 +80,6 @@ public static class SalaryCompositionMapping
             IsNotAllowDelete = request.IsNotAllowDelete,
             OrganizationUnitIds = request.OrganizationUnitIds,
             OrganizationUnitNames = request.OrganizationUnitNames,
-            IsDefault = request.IsDefault,
             AutoSumCompositionCode = request.AutoSumCompositionCode,
             IsAutoSumEmployee = request.IsAutoSumEmployee,
             AutoSumEmployeeType = request.AutoSumEmployeeType,

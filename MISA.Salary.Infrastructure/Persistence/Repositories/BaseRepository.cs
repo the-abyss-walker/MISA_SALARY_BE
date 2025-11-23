@@ -144,32 +144,74 @@ public abstract class BaseRepository<TEntity, TKey> : IBaseRepository<TEntity, T
                           SET {aliasedColumns}
                           WHERE {keyColumnName} = @{keyPropertyName};
                           """;
-        return await connection.ExecuteAsync(commandText, entity) > 0;
+        var count = await connection.ExecuteAsync(commandText, entity);
+        return count > 0;
     }
 
     /// <summary>
-    /// Cập nhật một số thuộc tính cụ thể của bản ghi dựa trên khóa chính.
+    /// Cập nhật từng phần (partial update) theo DTO có chứa khóa chính.
+    /// Chỉ update các thuộc tính có giá trị khác null.
     /// </summary>
-    /// <param name="entity">Thực thể cần cập nhật</param>
-    /// <param name="propertiesToUpdate">Thuộc tính cần cập nhật</param>
-    /// <returns></returns>
-    public async Task<bool> UpdatePartialAsync(TEntity entity, IEnumerable<string> propertiesToUpdate)
+    /// <typeparam name="TUpdate">DTO update chứa khóa chính</typeparam>
+    /// <param name="updateRequest">Đối tượng update</param>
+    public async Task<bool> UpdatePartialAsync<TUpdate>(TUpdate updateRequest)
     {
         await using var connection = await _dataSource.OpenConnectionAsync();
+
         var tableName = _entityAttributeValues.GetTableName<TEntity>();
-        var columnMappings = _entityAttributeValues
-            .GetColumnMappings<TEntity>(addKey: true);
-        var (keyColumnName, keyPropertyName) = _entityAttributeValues
-            .GetKeyColumnNameAndPropertyName<TEntity>();
-        var setClauses = propertiesToUpdate
-            .Where(prop => columnMappings.ContainsValue(prop))
-            .Select(prop => $"{columnMappings.First(kv => kv.Value == prop).Key} = @{prop}");
+        var columnMappings = _entityAttributeValues.GetColumnMappings<TEntity>(addKey: true);
+
+        var (keyColumnName, keyPropertyName) =
+            _entityAttributeValues.GetKeyColumnNameAndPropertyName<TEntity>();
+
+        // Lấy thuộc tính khóa chính từ DTO update
+        var keyProp = typeof(TUpdate).GetProperty(keyPropertyName);
+        if (keyProp is null)
+            return false;
+
+        var idValue = keyProp.GetValue(updateRequest);
+        if (idValue is null)
+            return false;
+
+        var parameters = new DynamicParameters();
+        parameters.Add($"@{keyPropertyName}", idValue);
+
+        // Lấy các thuộc tính khác null cần update
+        var requestProperties = typeof(TUpdate)
+            .GetProperties()
+            .Where(p => p.Name != keyPropertyName) // bỏ qua khóa chính
+            .Where(p => p.GetValue(updateRequest) != null)
+            .ToList();
+
+        // Không có gì để update
+        if (requestProperties.Count == 0)
+            return false;
+
+        var setClauses = new List<string>();
+
+        foreach (var prop in requestProperties)
+        {
+            // prop.Name phải tồn tại trong mapping entity
+            if (!columnMappings.ContainsValue(prop.Name))
+                continue;
+
+            var columnName = columnMappings.First(x => x.Value == prop.Name).Key;
+
+            setClauses.Add($"{columnName} = @{prop.Name}");
+            parameters.Add($"@{prop.Name}", prop.GetValue(updateRequest));
+        }
+
+        if (setClauses.Count == 0)
+            return false;
+
         var commandText = $"""
-                          UPDATE {tableName}
-                          SET {string.Join(", ", setClauses)}
-                          WHERE {keyColumnName} = @{keyPropertyName};
-                          """;
-        return await connection.ExecuteAsync(commandText, entity) > 0;
+                      UPDATE {tableName}
+                      SET {string.Join(", ", setClauses)}
+                      WHERE {keyColumnName} = @{keyPropertyName};
+                      """;
+
+        var affected = await connection.ExecuteAsync(commandText, parameters);
+        return affected > 0;
     }
 
     /// <summary>
