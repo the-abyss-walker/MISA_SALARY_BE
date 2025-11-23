@@ -18,12 +18,12 @@ public class SalaryCompositionResponse
     public string? Description { get; set; }
     public Status Status { get; set; }
     public OptionShowPaycheck? OptionShowPaycheck { get; set; }
-    public bool IsNotAllowDelete { get; set; }
+    public bool? IsNotAllowDelete { get; set; }
     public List<string> OrganizationUnitIds { get; set; } = [];
     public List<string> OrganizationUnitNames { get; set; } = [];
     public bool IsDefault { get; set; }
     public string? AutoSumCompositionCode { get; set; }
-    public bool IsAutoSumEmployee { get; set; }
+    public bool? IsAutoSumEmployee { get; set; }
     public AutoSumEmployeeType? AutoSumEmployeeType { get; set; }
     public AutoSumOrgLevel? AutoSumOrgLevel { get; set; }
     public FormulaCompositionType? FormulaCompositionType { get; set; }

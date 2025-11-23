@@ -51,7 +51,7 @@ public class SalaryComposition : AuditableEntity, IEntity<int>
     public OptionShowPaycheck? OptionShowPaycheck { get; set; }
 
     [Column("salary_composition_is_not_allow_delete")]
-    public bool IsNotAllowDelete { get; set; }
+    public bool? IsNotAllowDelete { get; set; }
 
     [Column("organization_unit_ids")]
     public string? OrganizationUnitIdsJson { get; set; }
@@ -76,7 +76,7 @@ public class SalaryComposition : AuditableEntity, IEntity<int>
     public string? AutoSumCompositionCode { get; set; }
 
     [Column("salary_composition_is_auto_sum_employee")]
-    public bool IsAutoSumEmployee { get; set; }
+    public bool? IsAutoSumEmployee { get; set; }
 
     [Column("salary_composition_auto_sum_employee_type")]
     public AutoSumEmployeeType? AutoSumEmployeeType { get; set; }

@@ -1,4 +1,6 @@
-﻿using MISA.Salary.Application.UseCases.Interfaces;
+﻿using MISA.Salary.Application.Commons.Mapping;
+using MISA.Salary.Application.Commons.Models.SalaryCompositionSystem;
+using MISA.Salary.Application.UseCases.Interfaces;
 using MISA.Salary.Contract.Query;
 using MISA.Salary.Contract.Shared;
 using MISA.Salary.Domain.Entitites;
@@ -22,14 +24,17 @@ public class SalaryCompositionSystemService : ISalaryCompositionSystemService
         return Result<PaginationResult<SalaryCompositionSystem>>.Success(res);
     }
 
-    public async Task<Result<SalaryCompositionSystem>> ExistCompositionCode(string salaryCompositionCode)
+    public async Task<Result<SalaryCompositionSystemResponse>> ExistCompositionCode(string salaryCompositionCode)
     {
         var isDuplicate = await _salaryCompositionSystemRepository.ExistCompositionCode(salaryCompositionCode);
         if (isDuplicate)
         {
-            var res = await _salaryCompositionSystemRepository.GetByCodeAsync(salaryCompositionCode);
-            return Result<SalaryCompositionSystem>.Success(res!);
+            var salaryCompositionSystem = await _salaryCompositionSystemRepository.GetByCodeAsync(salaryCompositionCode);
+            
+            var res = SalaryCompositionSystemMapping.ToSalaryCompositionSystemResponse(salaryCompositionSystem);
+
+            return Result<SalaryCompositionSystemResponse>.Success(res!);
         }
-        return Result<SalaryCompositionSystem>.Success(null!);
+        return Result<SalaryCompositionSystemResponse>.Success(null!);
     }
 }

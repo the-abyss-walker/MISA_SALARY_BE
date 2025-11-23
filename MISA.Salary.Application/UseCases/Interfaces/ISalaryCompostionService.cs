@@ -1,4 +1,5 @@
 ﻿using MISA.Salary.Application.Commons.Models.SalaryComposition;
+using MISA.Salary.Application.Commons.Models.SalaryCompositionSystem;
 using MISA.Salary.Contract.Query;
 using MISA.Salary.Contract.Shared;
 using MISA.Salary.Domain.Entitites;
@@ -18,5 +19,7 @@ public interface ISalaryCompostionService
     Task<Result> BulkDeleteSalaryCompositions(IEnumerable<int> salaryCompositionIds);
     Task<Result> UpdateSalaryCompositionStatus(int salaryCompositionId, Status status);
     Task<Result> UpdateListSalaryCompositionStatus(IEnumerable<int> salaryCompositionIds, Status status);
-    Task<Result<string>> CreateSalaryCompositionFromSystemAsync(IEnumerable<int> salaryCompositionSystemIds);
+    Task<Result> CreateSalaryCompositionFromSystemAsync(IEnumerable<int> salaryCompositionSystemIds);
+    Task<Result<IEnumerable<SalaryCompositionSystemResponse>>> UpdateListSalaryCompositionFromSystemAsync(
+        UpdateFromSystemRequest request);
 }

@@ -1,6 +1,7 @@
 ﻿using MISA.Salary.Application.Commons.Errors;
 using MISA.Salary.Application.Commons.Mapping;
 using MISA.Salary.Application.Commons.Models.SalaryComposition;
+using MISA.Salary.Application.Commons.Models.SalaryCompositionSystem;
 using MISA.Salary.Application.UseCases.Interfaces;
 using MISA.Salary.Contract.Query;
 using MISA.Salary.Contract.Shared;
@@ -153,7 +154,7 @@ public class SalaryCompositionService(
             return Result.Failure(404, SalaryCompositionErrors.SalaryCompositionNotFound);
         }
 
-        var updated = await salaryCompositionRepository.UpdateSalaryCompositionStatus(salaryCompositionId, status);
+        var updated = await salaryCompositionRepository.UpdateSalaryCompositionStatusAsync(salaryCompositionId, status);
         if (!updated)
         {
             return Result.Failure(400, SalaryCompositionErrors.SalaryCompositionUpdateStatusFailed);
@@ -164,7 +165,7 @@ public class SalaryCompositionService(
 
     public async Task<Result> UpdateListSalaryCompositionStatus(IEnumerable<int> salaryCompositionIds, Status status)
     {
-        var update = await salaryCompositionRepository.UpdateSalaryCompositionListStatus(salaryCompositionIds, status);
+        var update = await salaryCompositionRepository.UpdateSalaryCompositionListStatusAsync(salaryCompositionIds, status);
 
         if (!update)
         {
@@ -174,16 +175,67 @@ public class SalaryCompositionService(
         return Result.Success();
     }
 
-    public async Task<Result<string>> CreateSalaryCompositionFromSystemAsync(IEnumerable<int> salaryCompositionSystemIds)
+    public async Task<Result> CreateSalaryCompositionFromSystemAsync(IEnumerable<int> salaryCompositionSystemIds)
     {
         var salaryCompositionSystems = await salaryCompositionSystemRepository.GetByIdsAsync(salaryCompositionSystemIds);
 
         var salaryCompositions = salaryCompositionSystems.Select(SalaryCompositionMapping.ToSalaryCompositionEntity).ToList();
         
-        await salaryCompositionSystemRepository.RemoveFromSystemCompositionsAsync(salaryCompositionSystemIds);
+        if (await salaryCompositionRepository.AddRangeAsync(salaryCompositions))
+        {
+            await salaryCompositionSystemRepository.RemoveFromSystemCompositionsAsync(salaryCompositionSystemIds);
+        }
 
-        await salaryCompositionRepository.AddRangeAsync(salaryCompositions);
 
-        return Result<string>.Success("Salary composition created from system successfully.", 201);
+        return Result.Success(201);
+    }
+
+    public async Task<Result<IEnumerable<SalaryCompositionSystemResponse>>> UpdateListSalaryCompositionFromSystemAsync(
+        UpdateFromSystemRequest request)
+    {
+        // thành phần lương hệ thống
+        var salaryCompositionSystems = await salaryCompositionSystemRepository.GetByIdsAsync(request.SalaryCompositionSystemIds);
+
+        // thành phần lương hệ thống chuyển đổi sang response
+        var salaryCompositionSystemsResponse = salaryCompositionSystems
+            .Select(SalaryCompositionSystemMapping.ToSalaryCompositionSystemResponse);
+
+        // thành phần lương hệ thống đã tồn tại trong thành phần lương
+        var duplicated = new List<SalaryCompositionSystemResponse>();
+        foreach (var system in salaryCompositionSystemsResponse)
+        {
+            var exists = await salaryCompositionRepository.ExistsByCodeAsync(system.SalaryCompositionSystemCode);
+            if (exists)
+            {
+                duplicated.Add(system);
+            }
+        }
+
+        if (request.IsAllowanceUpdate is null || request.IsAllowanceUpdate == false)
+        {
+            return Result<IEnumerable<SalaryCompositionSystemResponse>>.Success(duplicated);
+        }
+
+        // thành phần lương được cập nhật từ hệ thống
+        var salaryCompositionsToUpdate = salaryCompositionSystems
+            .Where(sc => duplicated.Any(r => r.Id == sc.Id))
+            .Select(SalaryCompositionMapping.ToSalaryCompositionEntity);
+        // cập nhật thành phần lương
+        if (await salaryCompositionRepository.UpdateRangeAsync(salaryCompositionsToUpdate))
+        {
+            // id của thành phần lương hệ thống bị xóa
+            var idsToRemove = duplicated.Select(r => r.Id);
+            // xóa thành phần lương hệ thống sau khi cập nhật
+            await salaryCompositionSystemRepository.RemoveFromSystemCompositionsAsync(idsToRemove);
+        }
+
+        // thành phần lương còn lại được thêm mới
+        var salaryCompositionToInsert = salaryCompositionSystems
+            .Where(sys => duplicated.All(d => d.Id != sys.Id))
+            .Select(sys => sys.Id);
+
+        await CreateSalaryCompositionFromSystemAsync(salaryCompositionToInsert);
+
+        return Result<IEnumerable<SalaryCompositionSystemResponse>>.Success(null!);
     }
 }

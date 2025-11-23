@@ -86,4 +86,11 @@ public class SalaryCompositionController(ISalaryCompostionService salaryComposti
         var res = await salaryCompostionService.CreateSalaryCompositionFromSystemAsync(ids);
         return ProcessResult(res);
     }
+
+    [HttpPut("from-system")]
+    public async Task<IActionResult> UpdateListSalaryCompositionFromSystem([FromBody] UpdateFromSystemRequest request)
+    {
+        var res = await salaryCompostionService.UpdateListSalaryCompositionFromSystemAsync(request);
+        return ProcessResult(res);
+    }
 }

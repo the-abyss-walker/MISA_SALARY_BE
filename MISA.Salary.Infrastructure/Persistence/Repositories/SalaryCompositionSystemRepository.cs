@@ -68,14 +68,22 @@ public class SalaryCompositionSystemRepository : BaseRepository<SalaryCompositio
         var columnMappings = _entityAttributeValues.GetColumnMappings<SalaryCompositionSystem>(addKey: false);
         var codeColumn = columnMappings
             .FirstOrDefault(cm => cm.Value == nameof(SalaryCompositionSystem.SalaryCompositionSystemCode)).Key;
+        var isUssedColumn = columnMappings
+            .FirstOrDefault(cm => cm.Value == nameof(SalaryCompositionSystem.IsUsed)).Key;
         if (string.IsNullOrWhiteSpace(codeColumn))
         {
-            codeColumn = "salary_composition_code";
+            codeColumn = "salary_composition_system_code";
+        }
+        if (string.IsNullOrWhiteSpace(isUssedColumn))
+        {
+            isUssedColumn = "salary_composition_system_is_used";
         }
         var commandText = $"""
                           SELECT COUNT(1) 
                           FROM {tableName} 
-                          WHERE {codeColumn} = @SalaryCompositionCode;
+                          WHERE 
+                            {codeColumn} = @SalaryCompositionCode
+                            AND {isUssedColumn} = 0;
                           """;
         var parameters = new DynamicParameters();
         parameters.Add("@SalaryCompositionCode", salaryCompositionCode);

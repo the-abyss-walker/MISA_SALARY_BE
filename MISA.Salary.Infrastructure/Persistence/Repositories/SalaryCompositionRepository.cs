@@ -37,7 +37,7 @@ public class SalaryCompositionRepository: BaseRepository<SalaryComposition, int>
         return PaginationResult<SalaryComposition>.Create(totalCount, items);
     }
 
-    public async Task<bool> UpdateSalaryCompositionStatus(int id, Status status)
+    public async Task<bool> UpdateSalaryCompositionStatusAsync(int id, Status status)
     {
         await using var connection = await _dataSource.OpenConnectionAsync();
         var tableName = _entityAttributeValues.GetTableName<SalaryComposition>();
@@ -67,7 +67,7 @@ public class SalaryCompositionRepository: BaseRepository<SalaryComposition, int>
         return rows > 0;
     }
 
-    public async Task<bool> UpdateSalaryCompositionListStatus(IEnumerable<int> ids, Status status)
+    public async Task<bool> UpdateSalaryCompositionListStatusAsync(IEnumerable<int> ids, Status status)
     {
         await using var connection = await _dataSource.OpenConnectionAsync();
         var tableName = _entityAttributeValues.GetTableName<SalaryComposition>();
@@ -125,6 +125,51 @@ public class SalaryCompositionRepository: BaseRepository<SalaryComposition, int>
                           VALUES ({parameterNames});
                           """;
         var rows = await connection.ExecuteAsync(commandText, entities);
+        return rows > 0;
+    }
+
+    public async Task<bool> UpdateRangeAsync(IEnumerable<SalaryComposition> entities)
+    {
+        if (entities == null) return false;
+        var entityList = entities.ToList();
+        if (entityList.Count == 0) return false;
+
+        await using var connection = await _dataSource.OpenConnectionAsync();
+
+        var tableName = _entityAttributeValues.GetTableName<SalaryComposition>();
+
+        var (keyColumnName, keyPropertyName) = _entityAttributeValues
+            .GetKeyColumnNameAndPropertyName<SalaryComposition>();
+
+        var columnMappings = _entityAttributeValues.GetColumnMappings<SalaryComposition>(addKey: true);
+
+        // Build SET clause excluding primary key column
+        var setColumns = columnMappings
+            .Where(cm => !string.Equals(cm.Value, keyPropertyName, StringComparison.OrdinalIgnoreCase))
+            .Select(cm => $"{cm.Key} = @{cm.Value}");
+        var setClause = string.Join(", ", setColumns);
+
+        // Prefer updating by code when available (to match system items), otherwise fallback to key column
+        var codeColumn = columnMappings
+            .FirstOrDefault(cm => cm.Value == nameof(SalaryComposition.SalaryCompositionCode)).Key;
+
+        string whereClause;
+        if (!string.IsNullOrWhiteSpace(codeColumn))
+        {
+            whereClause = $"{codeColumn} = @SalaryCompositionCode";
+        }
+        else
+        {
+            whereClause = $"{keyColumnName} = @{keyPropertyName}";
+        }
+
+        var commandText = $"""
+                          UPDATE {tableName}
+                          SET {setClause}
+                          WHERE {whereClause};
+                          """;
+
+        var rows = await connection.ExecuteAsync(commandText, entityList);
         return rows > 0;
     }
 }
