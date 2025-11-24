@@ -3,4 +3,5 @@
 namespace MISA.Salary.Domain.Repositories;
 public interface IOrganizationUnitRepository : IBaseRepository<OrganizationUnit, int>
 {
+    Task<OrganizationUnit?> GetRootUnitAsync();
 }

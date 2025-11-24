@@ -3,12 +3,14 @@ using MISA.Salary.Application.Commons.Mapping;
 using MISA.Salary.Application.Commons.Models.SalaryComposition;
 using MISA.Salary.Application.Commons.Models.SalaryCompositionSystem;
 using MISA.Salary.Application.UseCases.Interfaces;
+using MISA.Salary.Contract.Exceptions;
 using MISA.Salary.Contract.Query;
 using MISA.Salary.Contract.Shared;
 using MISA.Salary.Domain.Entitites;
 using MISA.Salary.Domain.Enums;
 using MISA.Salary.Domain.Repositories;
 using MISA.Salary.Infrastructure.Persistence.Repositories;
+using System.Net.WebSockets;
 
 namespace MISA.Salary.Application.UseCases.Implements;
 public class SalaryCompositionService(
@@ -183,8 +185,9 @@ public class SalaryCompositionService(
         var salaryCompositionSystems = await salaryCompositionSystemRepository.GetByIdsAsync(salaryCompositionSystemIds);
 
         var salaryCompositions = salaryCompositionSystems.Select(SalaryCompositionMapping.ToSalaryCompositionEntity).ToList();
-        
-        if (await salaryCompositionRepository.AddRangeAsync(salaryCompositions))
+        var salaryCompositionsWithOrg =  await UpdateSalaryCompositionOrganizationUnits(salaryCompositions);
+
+        if (await salaryCompositionRepository.AddRangeAsync(salaryCompositionsWithOrg))
         {
             await salaryCompositionSystemRepository.RemoveFromSystemCompositionsAsync(salaryCompositionSystemIds);
         }
@@ -229,9 +232,12 @@ public class SalaryCompositionService(
         // thành phần lương được cập nhật từ hệ thống
         var salaryCompositionsToUpdate = salaryCompositionSystems
             .Where(sc => duplicated.Any(r => r.Id == sc.Id))
-            .Select(SalaryCompositionMapping.ToSalaryCompositionEntity);
+            .Select(SalaryCompositionMapping.ToSalaryCompositionEntity)
+            .ToList();
+        var salaryCompositionsToUpdateWithOrg = await UpdateSalaryCompositionOrganizationUnits(salaryCompositionsToUpdate);
+
         // cập nhật thành phần lương
-        if (await salaryCompositionRepository.UpdateRangeAsync(salaryCompositionsToUpdate))
+        if (await salaryCompositionRepository.UpdateRangeAsync(salaryCompositionsToUpdateWithOrg))
         {
             // id của thành phần lương hệ thống bị xóa
             var idsToRemove = duplicated.Select(r => r.Id);
@@ -247,5 +253,22 @@ public class SalaryCompositionService(
         await CreateSalaryCompositionFromSystemAsync(salaryCompositionToInsert);
 
         return Result<IEnumerable<SalaryCompositionSystemResponse>>.Success(null!);
+    }
+
+    private async Task<List<SalaryComposition>> UpdateSalaryCompositionOrganizationUnits(List<SalaryComposition> salaryCompositions)
+    {
+        var orgUnit = await organizationUnitRepository.GetRootUnitAsync();
+        if (orgUnit == null)
+        {
+            throw new NotFoundException("Đơn vị tổ chức gốc không tồn tại");
+        }
+
+        foreach (var sc in salaryCompositions)
+        {
+            sc.OrganizationUnitIds = [orgUnit.Id.ToString()];
+            sc.OrganizationUnitNames = [orgUnit.OrganizationName];
+        }
+
+        return salaryCompositions;
     }
 }
