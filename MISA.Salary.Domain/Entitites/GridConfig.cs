@@ -17,15 +17,6 @@ public class GridConfig : IEntity<int>
     [Column("field_name")]
     public string FieldName { get; set; } = string.Empty;
 
-    [Column("caption")]
-    public string Caption { get; set; } = string.Empty;
-
-    [Column("tooltip")]
-    public string Tooltip { get; set; } = string.Empty;
-
-    [Column("data_type")]
-    public string DataType { get; set; } = string.Empty;
-
     [Column("is_visible")]
     public bool IsVisible { get; set; }
 

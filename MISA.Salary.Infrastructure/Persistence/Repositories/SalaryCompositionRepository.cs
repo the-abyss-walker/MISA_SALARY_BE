@@ -29,6 +29,9 @@ public class SalaryCompositionRepository: BaseRepository<SalaryComposition, int>
                 p_page_index = parameter.PageIndex,
                 p_search_query = parameter.Query,
                 p_status = parameter.Status,
+                p_org_unit_ids = parameter.OrganizationUnitIds != null && parameter.OrganizationUnitIds.Any()
+                    ? string.Join(",", parameter.OrganizationUnitIds)
+                    : null
             },
             commandType: CommandType.StoredProcedure);
 
